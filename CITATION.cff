@@ -3,7 +3,7 @@ message: "If you use this software, please cite the paper below."
 title: "ReCo-WM: Restorable and Compositional World Models in Changing Environments"
 type: software
 license: MIT
-repository-code: "https://github.com/<org>/<repo>"   # TODO
+repository-code: "https://github.com/4760lky/ReCo-WM"   # TODO
 authors:
   - name: "TBD"                                        # TODO: family-names / given-names per author
 preferred-citation:
