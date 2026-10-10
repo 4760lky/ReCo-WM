@@ -1,0 +1,8 @@
+torch==2.12.1
+torchrl-nightly==2026.6.30
+tensordict-nightly==2026.6.30
+numpy==2.2.6
+gymnasium==0.29.1
+pandas==2.3.3
+termcolor==2.4.0
+pytest==9.1.1

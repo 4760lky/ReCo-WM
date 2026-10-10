@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+title: "ReCo-WM: Restorable and Compositional World Models in Changing Environments"
+type: software
+license: MIT
+repository-code: "https://github.com/<org>/<repo>"   # TODO
+authors:
+  - name: "TBD"                                        # TODO: family-names / given-names per author
+preferred-citation:
+  type: article
+  title: "ReCo-WM: Restorable and Compositional World Models in Changing Environments"
+  authors:
+    - name: "TBD"
+  journal: "TBD"
+  year: 2026

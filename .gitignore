@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv*/
+.env
+
+# Run artefacts (never commit)
+code/runs/
+code/runtime/
+code/logs/
+wandb/
+*.pt
+*.pth
+
+# Large raw data: distribute as release assets, not in git
+*.tar
+*.tgz
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

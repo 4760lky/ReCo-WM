@@ -1,0 +1,11 @@
+# Keep line endings consistent across Windows/Linux contributors
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.mp4 binary
+
+# Large binaries via Git LFS (run `git lfs install` once; GitHub free tier: 1 GB storage / 1 GB bandwidth per month)
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+paper/*.pdf filter=lfs diff=lfs merge=lfs -text

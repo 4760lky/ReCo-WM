@@ -1,0 +1,95 @@
+import torch
+import torch.nn.functional as F
+
+
+def soft_ce(pred, target, cfg):
+    pred = F.log_softmax(pred, dim=-1)
+    target = two_hot(target, cfg)
+    return -(target * pred).sum(-1, keepdim=True)
+
+
+def log_std(x, low, dif):
+    return low + 0.5 * dif * (torch.tanh(x) + 1)
+
+
+def gaussian_logprob(eps, log_std):
+    residual = -0.5 * eps.pow(2) - log_std
+    log_prob = residual - 0.9189385175704956
+    return log_prob.sum(-1, keepdim=True)
+
+
+def squash(mu, pi, log_pi):
+    mu = torch.tanh(mu)
+    pi = torch.tanh(pi)
+    squashed_pi = torch.log(F.relu(1 - pi.pow(2)) + 1e-06)
+    log_pi = log_pi - squashed_pi.sum(-1, keepdim=True)
+    return (mu, pi, log_pi)
+
+
+def int_to_one_hot(x, num_classes):
+    one_hot = torch.zeros(*x.shape, num_classes, device=x.device)
+    one_hot.scatter_(-1, x.unsqueeze(-1), 1)
+    return one_hot
+
+
+def symlog(x):
+    return torch.sign(x) * torch.log(1 + torch.abs(x))
+
+
+def symexp(x):
+    return torch.sign(x) * (torch.exp(torch.abs(x)) - 1)
+
+
+def two_hot(x, cfg):
+    if cfg.num_bins == 0:
+        return x
+    elif cfg.num_bins == 1:
+        return symlog(x)
+    x = torch.clamp(symlog(x), cfg.vmin, cfg.vmax).squeeze(1)
+    bin_idx = torch.floor((x - cfg.vmin) / cfg.bin_size)
+    bin_offset = ((x - cfg.vmin) / cfg.bin_size - bin_idx).unsqueeze(-1)
+    soft_two_hot = torch.zeros(x.shape[0], cfg.num_bins, device=x.device, dtype=x.dtype)
+    bin_idx = bin_idx.long()
+    soft_two_hot = soft_two_hot.scatter(1, bin_idx.unsqueeze(1), 1 - bin_offset)
+    soft_two_hot = soft_two_hot.scatter(
+        1, (bin_idx.unsqueeze(1) + 1) % cfg.num_bins, bin_offset
+    )
+    return soft_two_hot
+
+
+def two_hot_inv(x, cfg):
+    if cfg.num_bins == 0:
+        return x
+    elif cfg.num_bins == 1:
+        return symexp(x)
+    dreg_bins = torch.linspace(
+        cfg.vmin, cfg.vmax, cfg.num_bins, device=x.device, dtype=x.dtype
+    )
+    x = F.softmax(x, dim=-1)
+    x = torch.sum(x * dreg_bins, dim=-1, keepdim=True)
+    return symexp(x)
+
+
+def gumbel_softmax_sample(p, temperature=1.0, dim=0):
+    logits = p.log()
+    gumbels = (
+        -torch.empty_like(logits, memory_format=torch.legacy_contiguous_format)
+        .exponential_()
+        .log()
+    )
+    gumbels = (logits + gumbels) / temperature
+    y_soft = gumbels.softmax(dim)
+    return y_soft.argmax(-1)
+
+
+def termination_statistics(pred, target, eps=1e-09):
+    pred = pred.squeeze(-1)
+    target = target.squeeze(-1)
+    rate = target.sum() / len(target)
+    tp = ((pred > 0.5) & (target == 1)).sum()
+    fn = ((pred <= 0.5) & (target == 1)).sum()
+    fp = ((pred > 0.5) & (target == 0)).sum()
+    recall = tp / (tp + fn + eps)
+    precision = tp / (tp + fp + eps)
+    f1 = 2 * (precision * recall) / (precision + recall + eps)
+    return {"termination_rate": rate, "termination_f1": f1}
